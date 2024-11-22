@@ -82,8 +82,8 @@
     
     <!-- 차트 아래 정보 칸 -->
     <div id="chart-info">
-        <h3>차트 추가 정보</h3>
-        <p>여기에 차트 관련 추가 정보나 설명을 표시할 수 있습니다.</p>
+        <h3>ㅇㄱㅁㄸ</h3>
+        <p>여기에 매매기록 만들 예정 ㅇㅇ </p>
     </div>
 
     <!-- 자산 관리 UI -->
@@ -171,7 +171,7 @@
 
          // 롱 포지션 열기
          function openLongPosition() {
-            if (balance > 0) {
+            if (balance >= currentPrice) {
                 entryPrice = currentPrice;  // 현재 가격으로 진입 가격 설정
                 longPosition = balance;      // 전체 자산을 롱 포지션에 사용
                 document.getElementById('position-status').innerText = `포지션 상태: 진입중 (진입 가격: ${entryPrice})`;
@@ -179,7 +179,7 @@
                 document.getElementById('usdt-profit-loss').innerText = `손익비: 0 USDT`;
                 alert(`롱 포지션을 진입했습니다! 진입 가격: ${entryPrice}`);
             } else {
-                alert('보유 자산이 없습니다. 입금 후 다시 시도해주세요.');
+                alert('보유 자산이 부족합니다. 입금 후 다시 시도해주세요.');
             }
         }
 
@@ -187,7 +187,7 @@
 
         // 숏 포지션 열기
         function openShortPosition() {
-            if (balance > 0) {
+            if (balance >= currentPrice) {
                 entryPrice = currentPrice;  // 현재 가격으로 진입 가격 설정
                 shortPosition = balance;     // 전체 자산을 숏 포지션에 사용
                 document.getElementById('position-status').innerText = `포지션 상태: 진입중 (진입 가격: ${entryPrice})`;
@@ -195,7 +195,7 @@
                 document.getElementById('usdt-profit-loss').innerText = `손익비: 0 USDT`;
                 alert(`숏 포지션을 진입했습니다! 진입 가격: ${entryPrice}`);
             } else {
-                alert('보유 자산이 없습니다. 입금 후 다시 시도해주세요.');
+                alert('보유 자산이 부족합니다. 입금 후 다시 시도해주세요.');
             }
         }
 
@@ -238,6 +238,11 @@
         socket.onmessage = function (event) {
             const data = JSON.parse(event.data);
             currentPrice = parseFloat(data.p); // 실시간 가격 갱신
+            // 현재가를 반환하는 함수
+            function getCurrentPrice() {
+            return currentPrice;
+        }
+
 
             // 롱 포지션 진입중일 때 수익률 계산
             if (longPosition > 0) {
