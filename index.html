@@ -61,6 +61,19 @@
             margin-top: 20px;
             font-size: 1.2em;
         }
+        @media (max-width: 768px) {
+    body {
+        flex-direction: column; /* 세로로 배치 */
+    }
+
+    #tradingview-widget, #asset-management {
+        width: 100%; /* 각 요소를 100%로 설정해 화면을 꽉 채우도록 */
+    }
+
+    #chart-info {
+        width: 100%; /* 차트 정보 영역을 100%로 설정 */
+    }
+}
     </style>
 </head>
 <body>
