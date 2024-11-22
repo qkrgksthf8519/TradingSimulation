@@ -73,9 +73,9 @@
         <!-- 매매 관련 정보 -->
         <div id="trade-info">
             <button onclick="openLongPosition()">롱 포지션</button>
-            <button onclick="closeLongPosition()">매도</button>
             <button onclick="openShortPosition()">숏 포지션</button>
-            <button onclick="closeShortPosition()">매수</button>
+            <button onclick="closePosition()">포지션 종료</button>
+
             <div id="trade-results">
                 <p id="position-status">포지션 상태: 없음</p>
                 <p id="profit-loss">수익률: 0%</p>
@@ -151,28 +151,7 @@
             }
         }
 
-        // 롱 포지션 종료
-        function closeLongPosition() {
-            if (longPosition > 0) {
-                const profitLoss = currentPrice - entryPrice;
-                const percentageProfit = (profitLoss / entryPrice) * 100;
-                const usdtProfitLoss = profitLoss * (longPosition / entryPrice);
-
-                // 수익률과 손익비 갱신
-                document.getElementById('profit-loss').innerText = `수익률: ${percentageProfit.toFixed(2)}%`;
-                document.getElementById('usdt-profit-loss').innerText = `손익비: ${usdtProfitLoss.toFixed(2)} USDT`;
-
-                // 자산 갱신
-                balance += usdtProfitLoss;
-                longPosition = 0; // 롱 포지션 종료
-
-                document.getElementById('current-balance').innerText = `현재 금액: ${balance.toFixed(2)} USDT`;
-                document.getElementById('position-status').innerText = '포지션 상태: 종료';
-                alert('롱 포지션을 매도하였습니다.');
-            } else {
-                alert('진입된 롱 포지션이 없습니다.');
-            }
-        }
+       
 
         // 숏 포지션 열기
         function openShortPosition() {
@@ -188,28 +167,39 @@
             }
         }
 
-        // 숏 포지션 종료
-        function closeShortPosition() {
-            if (shortPosition > 0) {
-                const profitLoss = entryPrice - currentPrice; // 숏 포지션은 가격이 하락할 때 이득
-                const percentageProfit = (profitLoss / entryPrice) * 100;
-                const usdtProfitLoss = profitLoss * (shortPosition / entryPrice);
+       // 포지션 종료 (롱/숏 통합)
+       function closePosition() {
+       if (longPosition > 0) {
+        // 롱 포지션 종료 로직
+        const profitLoss = currentPrice - entryPrice;
+        const percentageProfit = (profitLoss / entryPrice) * 100;
+        const usdtProfitLoss = profitLoss * (longPosition / entryPrice);
 
-                // 수익률과 손익비 갱신
-                document.getElementById('profit-loss').innerText = `수익률: ${percentageProfit.toFixed(2)}%`;
-                document.getElementById('usdt-profit-loss').innerText = `손익비: ${usdtProfitLoss.toFixed(2)} USDT`;
+        balance += usdtProfitLoss; // 자산 갱신
+        longPosition = 0; // 롱 포지션 종료
+        alert('롱 포지션을 매도하였습니다.');
+     } else if (shortPosition > 0) {
+        // 숏 포지션 종료 로직
+        const profitLoss = entryPrice - currentPrice;
+        const percentageProfit = (profitLoss / entryPrice) * 100;
+        const usdtProfitLoss = profitLoss * (shortPosition / entryPrice);
 
-                // 자산 갱신
-                balance += usdtProfitLoss;
-                shortPosition = 0; // 숏 포지션 종료
-
-                document.getElementById('current-balance').innerText = `현재 금액: ${balance.toFixed(2)} USDT`;
-                document.getElementById('position-status').innerText = '포지션 상태: 종료';
-                alert('숏 포지션을 매도하였습니다.');
-            } else {
-                alert('진입된 숏 포지션이 없습니다.');
+        balance += usdtProfitLoss; // 자산 갱신
+        shortPosition = 0; // 숏 포지션 종료
+        alert('숏 포지션을 매도하였습니다.');
+     } else {
+        alert('진입된 포지션이 없습니다.');
+        return;
             }
+     
+
+    // 공통 UI 갱신
+    document.getElementById('profit-loss').innerText = `수익률: 0%`;
+    document.getElementById('usdt-profit-loss').innerText = `손익비: 0 USDT`;
+    document.getElementById('current-balance').innerText = `현재 금액: ${balance.toFixed(2)} USDT`;
+    document.getElementById('position-status').innerText = '포지션 상태: 종료';
         }
+
 
         // 웹소켓으로 실시간 가격 업데이트
         const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
