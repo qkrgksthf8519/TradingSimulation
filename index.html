@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradingView Chart</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            font-family: Arial, sans-serif;
+        }
+        #tradingview-widget {
+            flex: 3;
+        }
+        #asset-management {
+            flex: 1;
+            padding: 20px;
+            border-left: 2px solid #ddd;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .balance-display {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 12px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        #trade-info {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <!-- TradingView 위젯 -->
+    <div id="tradingview-widget"></div>
+
+    <!-- 자산 관리 UI -->
+    <div id="asset-management">
+        <h2>내 자산 관리</h2>
+        <div class="input-group">
+            <label for="usdt-amount">입금할 USDT 금액:</label>
+            <input type="number" id="usdt-amount" placeholder="금액 입력">
+        </div>
+        <div class="button-group">
+            <button onclick="deposit()">입금</button>
+            <button onclick="resetBalance()">청산</button>
+        </div>
+        <div class="balance-display" id="current-balance">
+            현재 금액: 0 USDT
+        </div>
+
+        <!-- 매매 관련 정보 -->
+        <div id="trade-info">
+            <button onclick="openLongPosition()">롱 포지션</button>
+            <button onclick="closeLongPosition()">매도</button>
+            <button onclick="openShortPosition()">숏 포지션</button>
+            <button onclick="closeShortPosition()">매수</button>
+            <div id="trade-results">
+                <p id="position-status">포지션 상태: 없음</p>
+                <p id="profit-loss">수익률: 0%</p>
+                <p id="usdt-profit-loss">손익비: 0 USDT</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TradingView 스크립트 -->
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <script>
+        // TradingView 위젯 초기화
+        new TradingView.widget({
+            "container_id": "tradingview-widget",
+            "symbol": "BINANCE:BTCUSDT",
+            "interval": "1",
+            "theme": "light",
+            "locale": "kr",
+            "width": "100%",
+            "height": "500",
+            "timezone": "Asia/Seoul",
+            "style": "1",
+            "toolbar_bg": "#f1f3f6",
+            "enable_publishing": false,
+            "hide_side_toolbar": false,
+            "details": true,
+        });
+
+        // 자산 관리 변수
+        let balance = 0;
+        let longPosition = 0;  // 롱 포지션 진입 가격
+        let entryPrice = 0;    // 롱 포지션 진입 시 가격
+        let currentPrice = 0;  // 현재 실시간 가격
+
+        // 입금 기능
+        function deposit() {
+            const inputField = document.getElementById('usdt-amount');
+            const depositAmount = parseFloat(inputField.value);
+
+            if (!isNaN(depositAmount) && depositAmount > 0) {
+                balance += depositAmount;
+                document.getElementById('current-balance').innerText = `현재 금액: ${balance.toFixed(2)} USDT`;
+                inputField.value = ''; // 입력 필드 초기화
+            } else {
+                alert('올바른 금액을 입력하세요!');
+            }
+        }
+        
+        // 청산 기능 (모든 자산 초기화)
+        function resetBalance() {
+            if (confirm('모든 자산을 초기화하시겠습니까?')) {
+                balance = 0;
+                longPosition = 0;
+                entryPrice = 0;
+                document.getElementById('current-balance').innerText = `현재 금액: ${balance.toFixed(2)} USDT`;
+                document.getElementById('profit-loss').innerText = `수익률: 0%`;
+                document.getElementById('usdt-profit-loss').innerText = `손익비: 0 USDT`;
+                document.getElementById('position-status').innerText = '포지션 상태: 없음';
+            }
+        }
+
+         // 롱 포지션 열기
+         function openLongPosition() {
+            if (balance > 0) {
+                entryPrice = currentPrice;  // 현재 가격으로 진입 가격 설정
+                longPosition = balance;      // 전체 자산을 롱 포지션에 사용
+                document.getElementById('position-status').innerText = `포지션 상태: 진입중 (진입 가격: ${entryPrice})`;
+                document.getElementById('profit-loss').innerText = `수익률: 0%`;
+                document.getElementById('usdt-profit-loss').innerText = `손익비: 0 USDT`;
+                alert(`롱 포지션을 진입했습니다! 진입 가격: ${entryPrice}`);
+            } else {
+                alert('보유 자산이 없습니다. 입금 후 다시 시도해주세요.');
+            }
+        }
+
+        // 롱 포지션 종료
+        function closeLongPosition() {
+            if (longPosition > 0) {
+                const profitLoss = currentPrice - entryPrice;
+                const percentageProfit = (profitLoss / entryPrice) * 100;
+                const usdtProfitLoss = profitLoss * (longPosition / entryPrice);
+
+                // 수익률과 손익비 갱신
+                document.getElementById('profit-loss').innerText = `수익률: ${percentageProfit.toFixed(2)}%`;
+                document.getElementById('usdt-profit-loss').innerText = `손익비: ${usdtProfitLoss.toFixed(2)} USDT`;
+
+                // 자산 갱신
+                balance += usdtProfitLoss;
+                longPosition = 0; // 롱 포지션 종료
+
+                document.getElementById('current-balance').innerText = `현재 금액: ${balance.toFixed(2)} USDT`;
+                document.getElementById('position-status').innerText = '포지션 상태: 종료';
+                alert('롱 포지션을 매도하였습니다.');
+            } else {
+                alert('진입된 롱 포지션이 없습니다.');
+            }
+        }
+
+        // 숏 포지션 열기
+        function openShortPosition() {
+            if (balance > 0) {
+                entryPrice = currentPrice;  // 현재 가격으로 진입 가격 설정
+                shortPosition = balance;     // 전체 자산을 숏 포지션에 사용
+                document.getElementById('position-status').innerText = `포지션 상태: 진입중 (진입 가격: ${entryPrice})`;
+                document.getElementById('profit-loss').innerText = `수익률: 0%`;
+                document.getElementById('usdt-profit-loss').innerText = `손익비: 0 USDT`;
+                alert(`숏 포지션을 진입했습니다! 진입 가격: ${entryPrice}`);
+            } else {
+                alert('보유 자산이 없습니다. 입금 후 다시 시도해주세요.');
+            }
+        }
+
+        // 숏 포지션 종료
+        function closeShortPosition() {
+            if (shortPosition > 0) {
+                const profitLoss = entryPrice - currentPrice; // 숏 포지션은 가격이 하락할 때 이득
+                const percentageProfit = (profitLoss / entryPrice) * 100;
+                const usdtProfitLoss = profitLoss * (shortPosition / entryPrice);
+
+                // 수익률과 손익비 갱신
+                document.getElementById('profit-loss').innerText = `수익률: ${percentageProfit.toFixed(2)}%`;
+                document.getElementById('usdt-profit-loss').innerText = `손익비: ${usdtProfitLoss.toFixed(2)} USDT`;
+
+                // 자산 갱신
+                balance += usdtProfitLoss;
+                shortPosition = 0; // 숏 포지션 종료
+
+                document.getElementById('current-balance').innerText = `현재 금액: ${balance.toFixed(2)} USDT`;
+                document.getElementById('position-status').innerText = '포지션 상태: 종료';
+                alert('숏 포지션을 매도하였습니다.');
+            } else {
+                alert('진입된 숏 포지션이 없습니다.');
+            }
+        }
+
+        // 웹소켓으로 실시간 가격 업데이트
+        const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
+        socket.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            currentPrice = parseFloat(data.p); // 실시간 가격 갱신
+
+            // 롱 포지션 진입중일 때 수익률 계산
+            if (longPosition > 0) {
+                const profitLoss = currentPrice - entryPrice;
+                const percentageProfit = (profitLoss / entryPrice) * 100;
+                const usdtProfitLoss = profitLoss * (longPosition / entryPrice);
+
+                document.getElementById('profit-loss').innerText = `수익률: ${percentageProfit.toFixed(2)}%`;
+                document.getElementById('usdt-profit-loss').innerText = `손익비: ${usdtProfitLoss.toFixed(2)} USDT`;
+            }
+
+            // 숏 포지션 진입중일 때 수익률 계산
+            if (shortPosition > 0) {
+                const profitLoss = entryPrice - currentPrice;
+                const percentageProfit = (profitLoss / entryPrice) * 100;
+                const usdtProfitLoss = profitLoss * (shortPosition / entryPrice);
+
+                document.getElementById('profit-loss').innerText = `수익률: ${percentageProfit.toFixed(2)}%`;
+                document.getElementById('usdt-profit-loss').innerText = `손익비: ${usdtProfitLoss.toFixed(2)} USDT`;
+            }
+        };
+    </script>
+</body>
+</html>
