@@ -107,6 +107,7 @@
         // 자산 관리 변수
         let balance = 0;
         let longPosition = 0;  // 롱 포지션 진입 가격
+        let shortPosition = 0; // 숏 포지션 진입 가격
         let entryPrice = 0;    // 롱 포지션 진입 시 가격
         let currentPrice = 0;  // 현재 실시간 가격
 
@@ -199,8 +200,21 @@
     document.getElementById('current-balance').innerText = `현재 금액: ${balance.toFixed(2)} USDT`;
     document.getElementById('position-status').innerText = '포지션 상태: 종료';
         }
+        
+        // 거래 기록 추가 함수
+        function addTradeRecord(type, timestamp, profitLossPercent, profitLossUSDT, entryPrice) {
+            const record = document.createElement('div');
+            record.className = 'record';
+            record.innerHTML = `
+                <p>포지션: ${type}</p>
+                <p>진입 시간: ${timestamp}</p>
+                <p>진입 가격: ${entryPrice}</p>
+                <p>수익률: ${profitLossPercent.toFixed(2)}%</p>
+                <p>손익비: ${profitLossUSDT.toFixed(2)} USDT</p>
+            `;
+            document.getElementById('chart-history').prepend(record);
 
-
+        
         // 웹소켓으로 실시간 가격 업데이트
         const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
         socket.onmessage = function (event) {
