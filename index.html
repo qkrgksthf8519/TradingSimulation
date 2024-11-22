@@ -214,7 +214,7 @@
             `;
             document.getElementById('chart-history').prepend(record);
 
-        
+        }
         // 웹소켓으로 실시간 가격 업데이트
         const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
         socket.onmessage = function (event) {
